@@ -1,81 +1,82 @@
 name: DevSecOps Pipeline (Sonar + Trivy + k3s)
 
 on:
-push:
-branches:
-- main
+  push:
+    branches:
+      - main
 
 env:
-IMAGE_NAME: ghcr.io/${{ github.repository }}:${{ github.sha }}
+  IMAGE_NAME: ghcr.io/${{ github.repository }}:${{ github.sha }}
 
 jobs:
-build-scan-deploy:
-runs-on: ubuntu-latest
+  build-scan-deploy:
+    runs-on: ubuntu-latest
 
-```
-permissions:
-  contents: read
-  packages: write
+    permissions:
+      contents: read
+      packages: write
 
-steps:
-  # 📥 Checkout code
-  - name: Checkout source
-    uses: actions/checkout@v4
+    steps:
+      # 📥 Checkout code
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-  # 🟢 Setup Node (สำหรับ Sonar scan context)
-  - name: Set up Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: "20"
+      # 🟢 Setup Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-  # 🔍 SonarCloud Scan (ใช้ CLI args + GitHub Variables)
-  - name: SonarCloud Scan
-    uses: SonarSource/sonarqube-scan-action@v4
-    with:
-      args: >
-        -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
-        -Dsonar.organization=${{ vars.SONAR_ORG }}
-        -Dsonar.sources=app
-    env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # 🔍 SonarCloud Scan (CLI args)
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        with:
+          args: >
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.SONAR_ORG }}
+            -Dsonar.sources=app
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  # 🔐 Login to GHCR
-  - name: Login to GHCR
-    run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      # 🔐 Login to GHCR
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-  # 🏗️ Build Docker image
-  - name: Build Docker image
-    run: docker build -t $IMAGE_NAME .
+      # 🏗️ Build Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t "${IMAGE_NAME}" .
 
-  # 🛡️ Trivy Scan (image)
-  - name: Run Trivy image scan
-    uses: aquasecurity/trivy-action@0.28.0
-    with:
-      image-ref: ${{ env.IMAGE_NAME }}
-      format: table
-      exit-code: "0"
-      ignore-unfixed: true
-      severity: CRITICAL,HIGH
+      # 🛡️ Trivy Scan
+      - name: Run Trivy image scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}
+          format: table
+          exit-code: "0"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
 
-  # 📤 Push image to GHCR
-  - name: Push Docker image
-    run: docker push $IMAGE_NAME
+      # 📤 Push Docker image
+      - name: Push Docker image
+        run: |
+          docker push "${IMAGE_NAME}"
 
-  # ☸️ Setup kubeconfig
-  - name: Setup kubeconfig
-    run: |
-      mkdir -p "$HOME/.kube"
-      echo "${{ secrets.KUBE_CONFIG }}" > "$HOME/.kube/config"
-      chmod 600 "$HOME/.kube/config"
+      # ☸️ Setup kubeconfig
+      - name: Setup kubeconfig
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG }}" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
 
-  # 🔁 Replace image tag in deployment.yaml
-  - name: Replace image in manifest
-    run: |
-      sed -i "s|ghcr.io/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME:.*|${IMAGE_NAME}|g" k8s/deployment.yaml
+      # 🔁 Replace image in manifest
+      - name: Replace image in manifest
+        run: |
+          sed -i "s|ghcr.io/pratchayakc/demo-devsecops:.*|${IMAGE_NAME}|g" k8s/deployment.yaml
 
-  # 🚀 Deploy to k3s
-  - name: Deploy to k3s
-    run: |
-      kubectl apply -f k8s/
-      kubectl rollout status deployment/demo-app
-```
+      # 🚀 Deploy to k3s
+      - name: Deploy to k3s
+        run: |
+          kubectl apply -f k8s/
+          kubectl rollout status deployment/demo-app
