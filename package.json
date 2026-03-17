@@ -1,8 +1,8 @@
 {
-  "name": "demo-app",
+  "name": "multi-app-demo",
   "version": "1.0.0",
-  "description": "Simple hello world app for GitHub Actions + SonarCloud + Trivy + k3s",
-  "main": "app/index.js",
+  "description": "2 services with Kong ingress",
+  "main": "index.js",
   "scripts": {
     "start": "node app/index.js"
   },
