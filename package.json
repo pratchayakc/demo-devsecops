@@ -1,0 +1,10 @@
+{
+  "name": "demo-app",
+  "version": "1.0.0",
+  "description": "Simple hello world app for GitHub Actions + SonarCloud + Trivy + k3s",
+  "main": "app/index.js",
+  "scripts": {
+    "start": "node app/index.js"
+  },
+  "license": "MIT"
+}
