@@ -15,7 +15,6 @@ spec:
             backend:
               service:
                 name: demo-service
-                namespace: demo
                 port:
                   number: 80
           - path: /page2
@@ -23,6 +22,5 @@ spec:
             backend:
               service:
                 name: demo-service
-                namespace: demo
                 port:
                   number: 80
