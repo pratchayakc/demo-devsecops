@@ -53,48 +53,11 @@ jobs:
         run: |
           npm install supertest jest
 
-      # 🧪 Test HTTP Server
+      # 🧪 Run HTTP Server Tests
       - name: Run HTTP Server Tests
         run: |
-          # Create the test file for HTTP server
-          echo "
-          const request = require('supertest');
-          const http = require('http');
-          const server = require('./server'); // เปลี่ยนเป็น path ที่เหมาะสมหากจำเป็น
-
-          describe('HTTP Server Tests', () => {
-            let app;
-
-            beforeAll(() => {
-              app = server.listen(3000);
-            });
-
-            afterAll(() => {
-              app.close();
-            });
-
-            it('should respond with \"hello from page 1\" on /page1', async () => {
-              const response = await request(app).get('/page1');
-              expect(response.status).toBe(200);
-              expect(response.text).toBe('hello from page 1\\n');
-            });
-
-            it('should respond with \"hello from page 2\" on /page2', async () => {
-              const response = await request(app).get('/page2');
-              expect(response.status).toBe(200);
-              expect(response.text).toBe('hello from page 2\\n');
-            });
-
-            it('should respond with \"hello from root\" on root', async () => {
-              const response = await request(app).get('/');
-              expect(response.status).toBe(200);
-              expect(response.text).toBe('hello from root\\n');
-            });
-          });
-          " > test.js
-
-          # Run the tests
-          node test.js
+          # Run the existing test.js file
+          node tests/test.js
 
       # 🛡️ Trivy Scan
       - name: Install Trivy
