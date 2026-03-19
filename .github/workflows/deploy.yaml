@@ -48,6 +48,54 @@ jobs:
         run: |
           docker build -t "${IMAGE_NAME}" .
 
+      # 🔐 Install dependencies for testing
+      - name: Install test dependencies
+        run: |
+          npm install supertest jest
+
+      # 🧪 Test HTTP Server
+      - name: Run HTTP Server Tests
+        run: |
+          # Create the test file for HTTP server
+          echo "
+          const request = require('supertest');
+          const http = require('http');
+          const server = require('./server'); // เปลี่ยนเป็น path ที่เหมาะสมหากจำเป็น
+
+          describe('HTTP Server Tests', () => {
+            let app;
+
+            beforeAll(() => {
+              app = server.listen(3000);
+            });
+
+            afterAll(() => {
+              app.close();
+            });
+
+            it('should respond with \"hello from page 1\" on /page1', async () => {
+              const response = await request(app).get('/page1');
+              expect(response.status).toBe(200);
+              expect(response.text).toBe('hello from page 1\\n');
+            });
+
+            it('should respond with \"hello from page 2\" on /page2', async () => {
+              const response = await request(app).get('/page2');
+              expect(response.status).toBe(200);
+              expect(response.text).toBe('hello from page 2\\n');
+            });
+
+            it('should respond with \"hello from root\" on root', async () => {
+              const response = await request(app).get('/');
+              expect(response.status).toBe(200);
+              expect(response.text).toBe('hello from root\\n');
+            });
+          });
+          " > test.js
+
+          # Run the tests
+          node test.js
+
       # 🛡️ Trivy Scan
       - name: Install Trivy
         run: |
@@ -82,5 +130,16 @@ jobs:
       # 🚀 Deploy to k3s
       - name: Deploy to k3s
         run: |
-          kubectl apply -f k8s/
+          kubectl create -f k8s/
+
+      # ⏳ Wait for Pod to be Running
+      - name: Wait for Pod to be Running
+        run: |
+          kubectl wait --for=condition=ready pod -l app=demo-app --timeout=300s
+          # Optionally, you can specify the exact pod name if you know it
+          # kubectl wait --for=condition=ready pod <pod-name> --timeout=300s
+
+      # 🚀 Ensure the pod is ready and rollout is complete
+      - name: Wait for rollout status
+        run: |
           kubectl rollout status deployment/demo-app
