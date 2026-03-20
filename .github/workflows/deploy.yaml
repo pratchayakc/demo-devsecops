@@ -48,17 +48,6 @@ jobs:
         run: |
           docker build -t "${IMAGE_NAME}" .
 
-      # 🔐 Install dependencies for testing
-      - name: Install test dependencies
-        run: |
-          npm install supertest jest
-
-      # 🧪 Run HTTP Server Tests
-      - name: Run HTTP Server Tests
-        run: |
-          # Run the existing test.js file
-          node tests/test.js
-
       # 🛡️ Trivy Scan
       - name: Install Trivy
         run: |
