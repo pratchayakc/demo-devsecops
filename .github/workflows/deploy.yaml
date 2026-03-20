@@ -82,16 +82,4 @@ jobs:
       # 🚀 Deploy to k3s
       - name: Deploy to k3s
         run: |
-          kubectl create -f k8s/
-
-      # ⏳ Wait for Pod to be Running
-      - name: Wait for Pod to be Running
-        run: |
-          kubectl wait --for=condition=ready pod -l app=demo-app --timeout=300s
-          # Optionally, you can specify the exact pod name if you know it
-          # kubectl wait --for=condition=ready pod <pod-name> --timeout=300s
-
-      # 🚀 Ensure the pod is ready and rollout is complete
-      - name: Wait for rollout status
-        run: |
-          kubectl rollout status deployment/demo-app
+          kubectl apply -f k8s/
