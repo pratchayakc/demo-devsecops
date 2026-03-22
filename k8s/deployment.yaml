@@ -25,3 +25,54 @@ spec:
             runAsNonRoot: true
             runAsUser: 1000
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true  # เพื่อป้องกันไม่ให้ผู้ใช้สามารถเขียนข้อมูลลงใน root filesystem
+      securityContext:
+        fsGroup: 2000  # ตั้งค่า fsGroup เพื่อให้การเข้าถึงไฟล์ระบบที่ปลอดภัยยิ่งขึ้น
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: demo
+  name: demo-app-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "create", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "create", "update"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: demo-app-rolebinding
+  namespace: demo
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: demo
+roleRef:
+  kind: Role
+  name: demo-app-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-demo-app-to-access-db
+  namespace: demo
+spec:
+  podSelector:
+    matchLabels:
+      app: demo-app
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: demo-db  # จำกัดให้ demo-app สามารถเข้าถึง db ได้เท่านั้น
+      ports:
+        - protocol: TCP
+          port: 3306  # พอร์ตของฐานข้อมูล
