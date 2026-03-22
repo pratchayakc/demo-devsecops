@@ -9,31 +9,7 @@ const client = new Client({
   database: 'mydb'
 });
 
-client.connect().then(async () => {
-  // ตรวจสอบว่าเชื่อมต่อกับฐานข้อมูล PostgreSQL สำเร็จหรือไม่
-  console.log("Connected to PostgreSQL database.");
-  
-  // เช็คว่า table users มีอยู่หรือไม่
-  const tableCheckQuery = `SELECT to_regclass('public.users') AS table_exists;`;
-  const result = await client.query(tableCheckQuery);
-  
-  if (!result.rows[0].table_exists) {
-    // หากไม่มี table users ให้สร้างตารางใหม่
-    const createTableQuery = `
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        age INT NOT NULL
-      );
-    `;
-    await client.query(createTableQuery);
-    console.log("Table 'users' created successfully.");
-  } else {
-    console.log("Table 'users' already exists.");
-  }
-}).catch(err => {
-  console.error('Error connecting to the database', err.stack);
-});
+client.connect();
 
 // สร้างเซิร์ฟเวอร์
 const http = require("http");
@@ -49,7 +25,7 @@ const server = http.createServer(async (req, res) => {
     const htmlContent = `
       <html>
         <head>
-          <title>ข้อมูลผู้ใช้</title>
+          <title>Users Information</title>
           <style>
             table { border-collapse: collapse; width: 100%; }
             table, th, td { border: 1px solid black; padding: 8px; text-align: left; }
@@ -57,12 +33,12 @@ const server = http.createServer(async (req, res) => {
           </style>
         </head>
         <body>
-          <h1>ข้อมูลผู้ใช้</h1>
+          <h1>User Information</h1>
           <table>
             <thead>
               <tr>
-                <th>ชื่อ</th>
-                <th>อายุ</th>
+                <th>Name</th>
+                <th>Age</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -70,13 +46,13 @@ const server = http.createServer(async (req, res) => {
               ${message}
             </tbody>
           </table>
-          <h2>เพิ่มข้อมูลผู้ใช้</h2>
+          <h2>Add User Information</h2>
           <form action="/add" method="POST">
-            <label for="name">ชื่อ: </label>
+            <label for="name">Name: </label>
             <input type="text" id="name" name="name" required><br><br>
-            <label for="age">อายุ: </label>
+            <label for="age">Age: </label>
             <input type="number" id="age" name="age" required><br><br>
-            <button type="submit">เพิ่มข้อมูล</button>
+            <button type="submit">Add User</button>
           </form>
         </body>
       </html>
@@ -104,7 +80,7 @@ async function getAllRecordsFromDB() {
   const res = await client.query('SELECT * FROM users');
   let html = '';
   res.rows.forEach(row => {
-    html += `<tr><td>${row.name}</td><td>${row.age}</td><td><button onclick="deleteUser(${row.id})">ลบ</button></td></tr>`;
+    html += `<tr><td>${row.name}</td><td>${row.age}</td><td><button onclick="deleteUser(${row.id})">Delete</button></td></tr>`;
   });
   return html;
 }
