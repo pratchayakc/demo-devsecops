@@ -21,6 +21,17 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
+          env:
+            - name: DATABASE_HOST
+              value: "postgres-db"
+            - name: DATABASE_PORT
+              value: "5432"
+            - name: DATABASE_USER
+              value: "user"
+            - name: DATABASE_PASSWORD
+              value: "password"
+            - name: DATABASE_NAME
+              value: "mydb"
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
