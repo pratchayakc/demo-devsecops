@@ -20,13 +20,10 @@ spec:
           image: postgres:13
           command:
             [
-              "psql", 
-              "-h", "localhost", 
-              "-U", "user", 
-              "-d", "mydb", 
-              "-c", 
-              "CREATE TABLE IF NOT EXISTS logs (path VARCHAR(255), message TEXT); \
-               INSERT INTO logs (path, message) VALUES ('/page1', 'Message for Page 1'), ('/page2', 'Message for Page 2');"
+              "sh", "-c",
+              "until psql -h postgres-db -U user -d mydb -c 'SELECT 1;' > /dev/null 2>&1; do echo 'Waiting for PostgreSQL to be ready...'; sleep 5; done; \
+              psql -h postgres-db -U user -d mydb -c \"CREATE TABLE IF NOT EXISTS logs (path VARCHAR(255), message TEXT);\"; \
+              psql -h postgres-db -U user -d mydb -c \"INSERT INTO logs (path, message) VALUES ('/page1', 'Message for Page 1'), ('/page2', 'Message for Page 2');\""
             ]
           env:
             - name: POSTGRES_USER
