@@ -46,7 +46,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.url === '/') {
     // หน้าเพิ่มข้อมูลและแสดงรายการข้อมูล
-    const message = await getAllRecordsFromDB();
+    const message = await getAllRecordsFromDB(); // ดึงข้อมูลทุกครั้งที่หน้า / ถูกโหลด
     const htmlContent = `
       <html>
         <head>
@@ -86,9 +86,36 @@ const server = http.createServer(async (req, res) => {
       const params = new URLSearchParams(body);
       const name = params.get('name');
       const age = params.get('age');
-      await addRecordToDB(name, age);
-      res.writeHead(302, { 'Location': '/' }); // Redirect ไปที่ / เพื่อแสดงผลการเพิ่มข้อมูล
-      res.end();
+      await addRecordToDB(name, age); // เพิ่มข้อมูลลงในฐานข้อมูล
+      const message = await getAllRecordsFromDB(); // ดึงข้อมูลใหม่จากฐานข้อมูลหลังจากเพิ่ม
+      const htmlContent = `
+        <html>
+          <head>
+            <title>User Information</title>
+          </head>
+          <body>
+            <h1>User Information</h1>
+            <h2>Add User Information</h2>
+            <form action="/" method="POST">
+              <label for="name">Name: </label>
+              <input type="text" id="name" name="name" required><br><br>
+              <label for="age">Age: </label>
+              <input type="number" id="age" name="age" required><br><br>
+              <button type="submit">Add User</button>
+            </form>
+
+            <h2>Users List</h2>
+            <table border="1">
+              <tr>
+                <th>Name</th>
+                <th>Age</th>
+              </tr>
+              ${message} <!-- แสดงรายการข้อมูลใหม่ -->
+            </table>
+          </body>
+        </html>
+      `;
+      res.end(htmlContent); // ส่งข้อมูลกลับมาให้แสดงผลทันที
     });
   }
 });
