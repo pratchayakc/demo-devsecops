@@ -28,6 +28,19 @@ client.connect().then(async () => {
     `;
     await client.query(createTableQuery);
     console.log("Table 'users' created successfully.");
+
+    // เพิ่มข้อมูลตัวอย่างลงในตาราง
+    const sampleData = [
+      { name: 'Alice', age: 30 },
+      { name: 'Bob', age: 25 },
+      { name: 'Charlie', age: 35 }
+    ];
+
+    for (let user of sampleData) {
+      const insertQuery = 'INSERT INTO users (name, age) VALUES ($1, $2)';
+      await client.query(insertQuery, [user.name, user.age]);
+    }
+    console.log("Sample data added to 'users' table.");
   } else {
     console.log("Table 'users' already exists.");
   }
@@ -45,8 +58,8 @@ const server = http.createServer(async (req, res) => {
   res.writeHead(200, { "Content-Type": "text/html" });
 
   if (req.url === '/') {
-    // หน้าเพิ่มข้อมูลและแสดงรายการข้อมูล
-    const message = await getAllRecordsFromDB(); // ดึงข้อมูลทุกครั้งที่หน้า / ถูกโหลด
+    // หน้าแสดงรายการข้อมูลจากฐานข้อมูล
+    const message = await getAllRecordsFromDB(); // ดึงข้อมูลจากฐานข้อมูล
     const htmlContent = `
       <html>
         <head>
@@ -54,15 +67,6 @@ const server = http.createServer(async (req, res) => {
         </head>
         <body>
           <h1>User Information</h1>
-          <h2>Add User Information</h2>
-          <form action="/" method="POST">
-            <label for="name">Name: </label>
-            <input type="text" id="name" name="name" required><br><br>
-            <label for="age">Age: </label>
-            <input type="number" id="age" name="age" required><br><br>
-            <button type="submit">Add User</button>
-          </form>
-
           <h2>Users List</h2>
           <table border="1">
             <tr>
@@ -75,48 +79,6 @@ const server = http.createServer(async (req, res) => {
       </html>
     `;
     res.end(htmlContent);
-  } else if (req.url === '/' && req.method === 'POST') {
-    // การเพิ่มข้อมูลเมื่อส่งฟอร์ม
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-
-    req.on('end', async () => {
-      const params = new URLSearchParams(body);
-      const name = params.get('name');
-      const age = params.get('age');
-      await addRecordToDB(name, age); // เพิ่มข้อมูลลงในฐานข้อมูล
-      const message = await getAllRecordsFromDB(); // ดึงข้อมูลใหม่จากฐานข้อมูลหลังจากเพิ่ม
-      const htmlContent = `
-        <html>
-          <head>
-            <title>User Information</title>
-          </head>
-          <body>
-            <h1>User Information</h1>
-            <h2>Add User Information</h2>
-            <form action="/" method="POST">
-              <label for="name">Name: </label>
-              <input type="text" id="name" name="name" required><br><br>
-              <label for="age">Age: </label>
-              <input type="number" id="age" name="age" required><br><br>
-              <button type="submit">Add User</button>
-            </form>
-
-            <h2>Users List</h2>
-            <table border="1">
-              <tr>
-                <th>Name</th>
-                <th>Age</th>
-              </tr>
-              ${message} <!-- แสดงรายการข้อมูลใหม่ -->
-            </table>
-          </body>
-        </html>
-      `;
-      res.end(htmlContent); // ส่งข้อมูลกลับมาให้แสดงผลทันที
-    });
   }
 });
 
@@ -128,12 +90,6 @@ async function getAllRecordsFromDB() {
     html += `<tr><td>${row.name}</td><td>${row.age}</td></tr>`;
   });
   return html;
-}
-
-// ฟังก์ชันเพิ่มข้อมูลผู้ใช้
-async function addRecordToDB(name, age) {
-  const query = 'INSERT INTO users (name, age) VALUES ($1, $2)';
-  await client.query(query, [name, age]);
 }
 
 server.listen(3000, '0.0.0.0', () => {
