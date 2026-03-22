@@ -21,44 +21,38 @@ const server = http.createServer(async (req, res) => {
   res.writeHead(200, { "Content-Type": "text/html" });
 
   if (req.url === '/') {
+    // หน้าเพิ่มข้อมูลและแสดงรายการข้อมูล
     const message = await getAllRecordsFromDB();
     const htmlContent = `
       <html>
         <head>
-          <title>Users Information</title>
-          <style>
-            table { border-collapse: collapse; width: 100%; }
-            table, th, td { border: 1px solid black; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-          </style>
+          <title>User Information</title>
         </head>
         <body>
           <h1>User Information</h1>
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Age</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${message}
-            </tbody>
-          </table>
           <h2>Add User Information</h2>
-          <form action="/add" method="POST">
+          <form action="/" method="POST">
             <label for="name">Name: </label>
             <input type="text" id="name" name="name" required><br><br>
             <label for="age">Age: </label>
             <input type="number" id="age" name="age" required><br><br>
             <button type="submit">Add User</button>
           </form>
+
+          <h2>Users List</h2>
+          <table border="1">
+            <tr>
+              <th>Name</th>
+              <th>Age</th>
+            </tr>
+            ${message}
+          </table>
         </body>
       </html>
     `;
     res.end(htmlContent);
-  } else if (req.url === '/add' && req.method === 'POST') {
+  } else if (req.url === '/' && req.method === 'POST') {
+    // การเพิ่มข้อมูลเมื่อส่งฟอร์ม
     let body = '';
     req.on('data', chunk => {
       body += chunk.toString();
@@ -69,7 +63,7 @@ const server = http.createServer(async (req, res) => {
       const name = params.get('name');
       const age = params.get('age');
       await addRecordToDB(name, age);
-      res.writeHead(302, { 'Location': '/' });
+      res.writeHead(302, { 'Location': '/' }); // Redirect ไปที่ / เพื่อแสดงผลการเพิ่มข้อมูล
       res.end();
     });
   }
@@ -80,7 +74,7 @@ async function getAllRecordsFromDB() {
   const res = await client.query('SELECT * FROM users');
   let html = '';
   res.rows.forEach(row => {
-    html += `<tr><td>${row.name}</td><td>${row.age}</td><td><button onclick="deleteUser(${row.id})">Delete</button></td></tr>`;
+    html += `<tr><td>${row.name}</td><td>${row.age}</td></tr>`;
   });
   return html;
 }
