@@ -1,12 +1,20 @@
 const { Client } = require('pg');
 
 // เชื่อมต่อกับ PostgreSQL Database
+const {
+  DATABASE_HOST,
+  DATABASE_PORT,
+  DATABASE_USER,
+  DATABASE_PASSWORD,
+  DATABASE_NAME
+} = process.env;
+
 const client = new Client({
-  host: 'postgres-db',  // ชื่อของ service ที่ใช้เชื่อมต่อ
-  port: 5432,
-  user: 'user',
-  password: 'password',
-  database: 'mydb'
+  host: DATABASE_HOST,
+  port: parseInt(DATABASE_PORT),
+  user: DATABASE_USER,
+  password: DATABASE_PASSWORD,
+  database: DATABASE_NAME
 });
 
 // เชื่อมต่อกับฐานข้อมูล

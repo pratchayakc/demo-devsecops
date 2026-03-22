@@ -79,6 +79,25 @@ jobs:
         run: |
           sed -i "s|ghcr.io/pratchayakc/demo-devsecops:.*|${IMAGE_NAME}|g" k8s/deployment.yaml
 
+      # 🔐 Create / Update Secret
+      - name: Create / Update Secret
+        run: |
+          kubectl create secret generic postgres-secret \
+            --from-literal=DB_USER=${{ secrets.DB_USER }} \
+            --from-literal=DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -n demo \
+            --dry-run=client -o yaml | kubectl -n demo apply -f -
+
+      # ⚙️ Create / Update ConfigMap
+      - name: Create / Update ConfigMap
+        run: |
+          kubectl create configmap app-config \
+            --from-literal=DB_NAME=${{ vars.DB_NAME }} \
+            --from-literal=DB_HOST=${{ vars.DB_HOST }} \
+            --from-literal=DB_PORT=${{ vars.DB_PORT }} \
+            -n demo \
+            --dry-run=client -o yaml | kubectl -n demo apply -f -
+
       # 🚀 Deploy to k3s
       - name: Deploy to k3s
         run: |

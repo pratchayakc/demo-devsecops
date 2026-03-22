@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
   name: demo-app
   namespace: demo
-  labels:
-    app: demo-app
 spec:
   replicas: 1
   selector:
@@ -23,15 +21,34 @@ spec:
             - containerPort: 3000
           env:
             - name: DATABASE_HOST
-              value: "postgres-db"
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_HOST
+
             - name: DATABASE_PORT
-              value: "5432"
-            - name: DATABASE_USER
-              value: "user"
-            - name: DATABASE_PASSWORD
-              value: "password"
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_PORT
+
             - name: DATABASE_NAME
-              value: "mydb"
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: DB_NAME
+
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: DB_USER
+
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: DB_PASSWORD
 ---
 apiVersion: v1
 kind: Service
