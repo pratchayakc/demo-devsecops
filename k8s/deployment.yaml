@@ -15,6 +15,26 @@ spec:
       labels:
         app: demo-app
     spec:
+      initContainers:
+        - name: init-db
+          image: postgres:13
+          command:
+            [
+              "psql", 
+              "-h", "localhost", 
+              "-U", "user", 
+              "-d", "mydb", 
+              "-c", 
+              "CREATE TABLE IF NOT EXISTS logs (path VARCHAR(255), message TEXT); \
+               INSERT INTO logs (path, message) VALUES ('/page1', 'Message for Page 1'), ('/page2', 'Message for Page 2');"
+            ]
+          env:
+            - name: POSTGRES_USER
+              value: "user"
+            - name: POSTGRES_PASSWORD
+              value: "password"
+            - name: POSTGRES_DB
+              value: "mydb"
       containers:
         - name: demo-app
           image: ghcr.io/pratchayakc/demo-devsecops:latest
