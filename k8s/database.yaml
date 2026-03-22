@@ -27,15 +27,6 @@ spec:
               value: "mydb"
           ports:
             - containerPort: 5432
-          lifecycle:
-            postStart:
-              exec:
-                command: 
-                  [
-                    "sh", "-c",
-                    "psql -h localhost -U user -d mydb -c \"CREATE TABLE IF NOT EXISTS logs (path VARCHAR(255), message TEXT);\"; \
-                     psql -h localhost -U user -d mydb -c \"INSERT INTO logs (path, message) VALUES ('/page1', 'Message for Page 1'), ('/page2', 'Message for Page 2');\""
-                  ]
 ---
 apiVersion: v1
 kind: Service
