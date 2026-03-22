@@ -4,23 +4,23 @@ metadata:
   name: kong-ingress
   namespace: demo
   annotations:
-    konghq.com/strip-path: "false"
+    konghq.com/strip-path: "false"  # ไม่ลบ path จากคำขอ
 spec:
   ingressClassName: kong
   rules:
     - http:
         paths:
-          - path: /page1
-            pathType: Prefix
+          - path: /
+            pathType: Prefix  # จะให้รองรับ path ทุกๆ ที่เริ่มต้นด้วย "/"
             backend:
               service:
-                name: demo-service
+                name: demo-service  # ชื่อของ Service ที่เชื่อมต่อกับแอป
                 port:
                   number: 80
-          - path: /page2
-            pathType: Prefix
+          - path: /add
+            pathType: Exact  # จะรองรับ path /add เท่านั้น
             backend:
               service:
-                name: demo-service
+                name: demo-service  # ชื่อของ Service ที่เชื่อมต่อกับแอป
                 port:
                   number: 80
