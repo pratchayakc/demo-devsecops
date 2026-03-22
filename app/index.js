@@ -9,7 +9,31 @@ const client = new Client({
   database: 'mydb'
 });
 
-client.connect();
+// เชื่อมต่อกับฐานข้อมูล
+client.connect().then(async () => {
+  console.log("Connected to PostgreSQL database.");
+
+  // ตรวจสอบว่า table users มีอยู่หรือไม่
+  const tableCheckQuery = `SELECT to_regclass('public.users') AS table_exists;`;
+  const result = await client.query(tableCheckQuery);
+
+  if (!result.rows[0].table_exists) {
+    // หากไม่มี table users ให้สร้างตารางใหม่
+    const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        age INT NOT NULL
+      );
+    `;
+    await client.query(createTableQuery);
+    console.log("Table 'users' created successfully.");
+  } else {
+    console.log("Table 'users' already exists.");
+  }
+}).catch(err => {
+  console.error("Error connecting to the database", err);
+});
 
 // สร้างเซิร์ฟเวอร์
 const http = require("http");
