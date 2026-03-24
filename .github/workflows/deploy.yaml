@@ -1,4 +1,4 @@
-name: DevSecOps Pipeline (Sonar + Trivy + k3s)
+name: DevSecOps Pipeline (Sonar + OWASP + Trivy + k3s)
 
 on:
   push:
@@ -27,7 +27,12 @@ jobs:
         with:
           node-version: "20"
 
-      # 🔍 SonarCloud Scan (CLI args)
+      # 📦 Install dependencies
+      - name: Install dependencies
+        run: |
+          npm install
+
+      # 🔍 SonarCloud Scan
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v4
         with:
@@ -37,6 +42,33 @@ jobs:
             -Dsonar.sources=app
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # ⚡ Cache OWASP Dependency-Check DB (ลดเวลา)
+      - name: Cache NVD DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: dependency-check
+
+      # 🛡️ OWASP Dependency Check
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "node-app"
+          path: "."
+          format: "HTML"
+          out: "reports"
+          args: >
+            --enableRetired
+            --enableExperimental
+            --failOnCVSS 7
+
+      # 📤 Upload OWASP report
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: reports
 
       # 🔐 Login to GHCR
       - name: Login to GHCR
@@ -48,7 +80,7 @@ jobs:
         run: |
           docker build -t "${IMAGE_NAME}" .
 
-      # 🛡️ Trivy Scan
+      # 🛡️ Install Trivy
       - name: Install Trivy
         run: |
           sudo apt-get update
@@ -58,9 +90,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y trivy
 
+      # 🔍 Run Trivy scan (fail if critical/high)
       - name: Run Trivy scan
         run: |
-          trivy image --severity CRITICAL,HIGH --ignore-unfixed $IMAGE_NAME
+          trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "${IMAGE_NAME}"
 
       # 📤 Push Docker image
       - name: Push Docker image
