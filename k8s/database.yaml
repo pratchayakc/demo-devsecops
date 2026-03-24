@@ -49,3 +49,23 @@ spec:
       targetPort: 5432
   selector:
     app: postgres-db
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-demo-app-to-postgres
+  namespace: demo
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres-db # กฎนี้ใช้กับ Pod ที่มี Label นี้ (เป้าหมายคือ DB)
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: demo-app # อนุญาต "เฉพาะ" Pod ที่มี Label นี้เท่านั้น
+      ports:
+        - protocol: TCP
+          port: 5432 # อนุญาตเฉพาะพอร์ตของ Database
