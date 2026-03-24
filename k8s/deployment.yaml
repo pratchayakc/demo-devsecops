@@ -13,42 +13,54 @@ spec:
       labels:
         app: demo-app
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: demo-app
           image: ghcr.io/pratchayakc/demo-devsecops:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
           env:
             - name: DATABASE_HOST
               valueFrom:
                 configMapKeyRef:
                   name: app-config
                   key: DB_HOST
-
             - name: DATABASE_PORT
               valueFrom:
                 configMapKeyRef:
                   name: app-config
                   key: DB_PORT
-
             - name: DATABASE_NAME
               valueFrom:
                 configMapKeyRef:
                   name: app-config
                   key: DB_NAME
-
             - name: DATABASE_USER
               valueFrom:
                 secretKeyRef:
                   name: postgres-secret
                   key: DB_USER
-
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: postgres-secret
                   key: DB_PASSWORD
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
