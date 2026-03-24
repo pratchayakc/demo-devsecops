@@ -18,14 +18,6 @@ spec:
           image: postgres:13
           ports:
             - containerPort: 5432
-
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            readOnlyRootFilesystem: false  
-
           env:
             - name: POSTGRES_USER
               valueFrom:
@@ -65,26 +57,3 @@ spec:
       targetPort: 5432
   selector:
     app: postgres-db
-
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-demo-app-to-postgres
-  namespace: demo
-spec:
-  podSelector:
-    matchLabels:
-      app: postgres-db
-
-  policyTypes:
-    - Ingress
-
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: demo-app
-      ports:
-        - protocol: TCP
-          port: 5432
