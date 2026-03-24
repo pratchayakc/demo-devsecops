@@ -2,7 +2,7 @@
 FROM node:20-alpine
 
 # สร้าง user และ group ที่ไม่ใช่ root
-RUN addgroup -g 1000 appgroup && adduser -u 1000 -S appuser -G appgroup
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup -u 1000
 
 # ตั้ง working directory
 WORKDIR /app
